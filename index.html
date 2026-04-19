@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Diffie-Hellman - Presentación Scroll Snap</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            background-color: #050505;
+            font-family: 'Inter', sans-serif;
+            color: #d1d5db;
+        }
+
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 0; 
+            pointer-events: none; /* Asegurar que no bloquee el scroll */
+        }
+
+        /* Contenedor principal con Scroll Snap vertical */
+        .scroll-container {
+            height: 100vh;
+            overflow-y: auto;
+            scroll-snap-type: y mandatory;
+            position: relative;
+            z-index: 10;
+            scroll-behavior: smooth;
+        }
+
+        /* Ocultar barra de scroll para estética más limpia en Chrome/Edge */
+        .scroll-container::-webkit-scrollbar {
+            width: 10px;
+        }
+        .scroll-container::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.8);
+        }
+        .scroll-container::-webkit-scrollbar-thumb {
+            background: rgba(0, 242, 254, 0.4);
+            border-radius: 5px;
+        }
+
+        .snap-section {
+            height: 100vh; /* Ocupa el 100% de la pantalla */
+            scroll-snap-align: start; /* El scroll se ajusta al inicio de esto */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .glass-card {
+            background: rgba(20, 25, 35, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 255, 255, 0.05);
+            width: 100%;
+            max-width: 900px;
+            max-height: 85vh;
+            overflow-y: auto;
+            /* Transición inicial para el Intersection Observer */
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        /* Estilizar barra de scroll INTERNA de las tarjetas si tienen extra contenido */
+        .glass-card::-webkit-scrollbar {
+            width: 8px;
+        }
+        .glass-card::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+        .glass-card::-webkit-scrollbar-thumb {
+            background: rgba(0, 242, 254, 0.3);
+            border-radius: 4px;
+        }
+        .glass-card::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 242, 254, 0.6);
+        }
+
+        /* Clase dinámica que se añade al hacer scroll */
+        .glass-card.in-view {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Tipografías */
+        h1, h2, h3 {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            color: #fff;
+            margin-top: 0;
+        }
+
+        h1 {
+            font-size: 3em;
+            background: linear-gradient(90deg, #00f2fe 0%, #4facfe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: none;
+            text-align: center;
+        }
+
+        h2 { font-size: 1.8em; }
+        
+        p, li {
+            font-size: 1.05em;
+            line-height: 1.5;
+            color: #d1d5db;
+        }
+
+        ul { margin-left: 1.5em; }
+        li { margin-bottom: 12px; }
+
+        .highlight-cyan { color: #00f2fe; font-weight: bold; }
+        .highlight-purple { color: #b14ffe; font-weight: bold; }
+        
+        .code-block {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(0, 0, 0, 0.8);
+            border-left: 4px solid #00f2fe;
+            padding: 15px 20px;
+            font-size: 0.9em;
+            border-radius: 4px;
+            margin: 20px 0;
+            color: #4ade80;
+            text-shadow: 0 0 5px rgba(74, 222, 128, 0.3);
+        }
+
+        .math-block {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(10, 10, 20, 0.8);
+            border: 1px solid rgba(177, 79, 254, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            font-size: 0.95em;
+            color: #e2e8f0;
+            box-shadow: 0 4px 15px rgba(177, 79, 254, 0.15);
+        }
+
+        .math-block .number { color: #facc15; }
+        .math-block .operator { color: #f43f5e; }
+        .math-block .keyword { color: #0ea5e9; }
+
+        .icon-box {
+            display: block;
+            width: 70px;
+            height: 70px;
+            line-height: 70px;
+            text-align: center;
+            border-radius: 50%;
+            background: rgba(0, 242, 254, 0.1);
+            color: #00f2fe;
+            margin: 0 auto 20px auto;
+            font-size: 32px;
+            border: 1px solid rgba(0, 242, 254, 0.3);
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.5);
+            font-size: 1.5em;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0) translateX(-50%); }
+            40% { transform: translateY(-15px) translateX(-50%); }
+            60% { transform: translateY(-7px) translateX(-50%); }
+        }
+
+        /* Para el layout del título */
+        .text-center { text-align: center; }
+
+        ::selection { background: rgba(0, 242, 254, 0.3); }
+    </style>
+</head>
+<body>
+    
+    <!-- Contenedor del fondo animado de partículas -->
+    <div id="particles-js"></div>
+
+    <main class="scroll-container">
+
+        <!-- Slide 1: Portada -->
+        <section class="snap-section">
+            <div class="glass-card text-center">
+                <div class="icon-box"><i class="fa-solid fa-shield-halved"></i></div>
+                <h1>Diffie-Hellman</h1>
+                <h2 style="font-size: 2em; margin-bottom: 20px;">Cómo establecer secretos en un mundo inseguro</h2>
+                <p style="color: rgba(255, 255, 255, 0.5); font-size: 1em;">Desliza hacia abajo para continuar <br><br> <i class="fa-solid fa-chevron-down"></i></p>
+            </div>
+            <div class="scroll-indicator"><i class="fa-solid fa-angle-down"></i></div>
+        </section>
+
+        <!-- Slide 2: Problema Clave Compartida -->
+        <section class="snap-section">
+            <div class="glass-card">
+                <h2><span class="highlight-cyan">01.</span> El Problema de la Clave Compartida</h2>
+                <br>
+                <ul>
+                    <li><strong>Cifrado César:</strong> Un método clásico donde cada letra se desplaza <span class="highlight-cyan">'n'</span> posiciones.</li>
+                    <li>Para que Alice y Bob se comuniquen, <strong>ambos deben conocer</strong> el valor de 'n' (la clave).</li>
+                </ul>
+                <div style="margin-top: 25px; padding: 20px; border-left: 4px solid #f43f5e; background: rgba(244, 63, 94, 0.1);">
+                    <p style="margin: 0;"><strong>⚠️ Problema fundamental:</strong> ¿Cómo comparten esa clave 'n' de forma segura sin que un tercero la intercepte?</p>
+                </div>
+                <p style="margin-top: 20px;">
+                    <i class="fa-solid fa-user-secret" style="color: #f43f5e;"></i> Si Alice envía la clave por email, un atacante (Eve) que intercepte el correo, leerá absolutamente todo.
+                </p>
+            </div>
+        </section>
+
+        <!-- Slide 3: El Desafio -->
+        <section class="snap-section">
+            <div class="glass-card">
+                <h2><span class="highlight-cyan">02.</span> El Desafío: El atacante escucha</h2>
+                <br>
+                <p>Imagina que estamos en una red pública (internet). Todo lo que envías puede ser <strong>"visto"</strong> por otros.</p>
+                <div class="code-block">
+                    > Traceroute: intercepting packets...<br>
+                    > Target A <---> Target B fully visible
+                </div>
+                <p style="font-size: 1.25em; margin: 30px 0; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.3);">
+                    ¿Podemos acordar un secreto compartido si el canal de comunicación es totalmente <em>público y transparente?</em>
+                </p>
+                <p style="opacity: 0.8;">
+                    Cualquier algoritmo que requiera que ambos "sepan" la clave de antemano es vulnerable si alguien escucha el proceso de intercambio.
+                </p>
+            </div>
+        </section>
+
+        <!-- Slide 4: Idea Central -->
+        <section class="snap-section">
+            <div class="glass-card text-center">
+                <h2><span class="highlight-purple">03.</span> La Idea Central</h2>
+                <p style="font-style: italic; margin-bottom: 30px;">Propuesto por Whitfield Diffie y Martin Hellman en 1976.</p>
+                
+                <h3 style="font-size: 2.2em; margin: 40px 0; color: #00f2fe;">No necesitamos enviarnos la clave secreta.</h3>
+                
+                <p>Ambas partes pueden <strong class="highlight-cyan">construir</strong> una clave compartida a partir de información pública.</p>
+                <p style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 8px; margin-top: 20px; text-align: left;">
+                    🎨 <strong>Analogía:</strong> Es como mezclar pinturas: es fácil mezclar colores, pero casi imposible separar la mezcla original para volver a un solo color inicial.
+                </p>
+            </div>
+        </section>
+
+        <!-- Slide 5: Magia de Aritmetica -->
+        <section class="snap-section">
+            <div class="glass-card">
+                <h2><span class="highlight-purple">04.</span> Magia de la Aritmética Modular</h2>
+                <p style="font-size: 1em; margin-bottom: 20px;">El algoritmo se basa en la dificultad de resolver el <span class="highlight-cyan">Problema del Logaritmo Discreto</span>.</p>
+                
+                <div class="math-block">
+                    1. Acuerdan datos públicos: primo grande <span class="keyword">p</span> y base <span class="keyword">g</span>.<br><br>
+                    2. Alice elige <span class="keyword">a</span> oculto. Calcula: 
+                    <span style="color: #fff">A = g<sup class="number">a</sup> <span class="operator">mod</span> p</span><br><br>
+                    3. Bob elige <span class="keyword">b</span> oculto. Calcula: 
+                    <span style="color: #fff">B = g<sup class="number">b</sup> <span class="operator">mod</span> p</span><br><br>
+                    4. Intercambian <span class="keyword">A</span> y <span class="keyword">B</span> en público.<br><br>
+                    5. Alice calcula <span style="color: #fff">(B)<sup class="number">a</sup> <span class="operator">mod</span> p = <span class="highlight-cyan">K</span></span><br><br>
+                    6. Bob calcula <span style="color: #fff">(A)<sup class="number">b</sup> <span class="operator">mod</span> p = <span class="highlight-cyan">K</span></span>
+                </div>
+                <p style="text-align: center; font-weight: bold; color: #4ade80;">
+                    ¡Ambos terminan con el mismo número K, el cual nunca fue enviado por la red!
+                </p>
+            </div>
+        </section>
+
+        <!-- Slide 6: Ejemplo Numerico -->
+        <section class="snap-section">
+            <div class="glass-card">
+                <h2><span class="highlight-purple">05.</span> Ejemplo Numérico Práctico</h2>
+                <p style="font-size: 1em;">Parámetros públicos (vistos por todos): <span class="highlight-cyan">p = 23</span>, <span class="highlight-cyan">g = 5</span></p>
+                
+                <div class="math-block">
+                    <span class="keyword"># Lado de Alice (Secreto a = 6)</span><br>
+                    5<sup class="number">6</sup> <span class="operator">mod</span> 23 = 15625 <span class="operator">mod</span> 23 = <span class="highlight-purple" style="font-size:1.3em">8</span> <span style="color:#888">// Alice envía 8</span><br><br>
+                    
+                    <span class="keyword"># Lado de Bob (Secreto b = 15)</span><br>
+                    5<sup class="number">15</sup> <span class="operator">mod</span> 23 = <span class="highlight-purple" style="font-size:1.3em">19</span> <span style="color:#888">// Bob envía 19</span><br><br>
+                    
+                    <span class="keyword"># Generación de la Clave Secreta Compartida</span><br>
+                    Alice recibe 19 -> 19<sup class="number">6</sup> <span class="operator">mod</span> 23 = <span class="highlight-cyan" style="font-size:1.5em; text-shadow: 0 0 10px #00f2fe;">2</span><br>
+                    Bob recibe 8  -> 8<sup class="number">15</sup> <span class="operator">mod</span> 23 = <span class="highlight-cyan" style="font-size:1.5em; text-shadow: 0 0 10px #00f2fe;">2</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 7: Cierre Atacante -->
+        <section class="snap-section">
+            <div class="glass-card" style="border-color: #f43f5e;">
+                <h2><span class="highlight-cyan">06.</span> ¿Por qué no lo descifra el atacante?</h2>
+                
+                <p>El atacante (Eve) en el medio de la red solo ve: <br>
+                <span class="highlight-cyan">p=23</span>, <span class="highlight-cyan">g=5</span>, <span class="highlight-purple">A=8</span>, <span class="highlight-purple">B=19</span>.</p>
+                
+                <div class="code-block" style="border-left-color: #f43f5e; color: #f43f5e;">
+                    // Para romperlo, Eve tendría que resolver:<br>
+                    5^a = 8 mod 23
+                </div>
+                
+                <ul>
+                    <li>En nuestro ejemplo pequeño, adivinar "a=6" es fácil.</li>
+                    <li>En la vida real, 'p' tiene <strong>cientos (o miles) de dígitos</strong>.</li>
+                    <li><strong>Logaritmo discreto:</strong> No existe un algoritmo eficiente para revertir esta operación en un tiempo razonable, ni con súpercomputadoras.</li>
+                </ul>
+                
+                <h3 style="text-align: center; margin-top: 30px; font-size: 1.5em;">
+                    <i class="fa-solid fa-lock" style="color: #4ade80;"></i> <span style="color: #4ade80;">Comunicación Segura Establecida</span>
+                </h3>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Particles JS -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+
+    <script>
+        // Configuración interactiva de Particles JS
+        particlesJS("particles-js", {
+          "particles": {
+            "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+            "color": { "value": ["#00f2fe", "#b14ffe", "#4ade80"] },
+            "shape": { "type": "circle" },
+            "opacity": { "value": 0.6, "random": true, "anim": { "enable": true, "speed": 1, "opacity_min": 0.1, "sync": false } },
+            "size": { "value": 4, "random": true, "anim": { "enable": true, "speed": 2, "size_min": 0.1, "sync": false } },
+            "line_linked": { "enable": true, "distance": 150, "color": "#00f2fe", "opacity": 0.3, "width": 1 },
+            "move": { "enable": true, "speed": 2.5, "direction": "none", "random": true, "out_mode": "out", "attract": { "enable": true, "rotateX": 600, "rotateY": 1200 } }
+          },
+          "interactivity": {
+            "detect_on": "window",
+            "events": {
+              "onhover": { "enable": true, "mode": "grab" },
+              "onclick": { "enable": true, "mode": "push" },
+              "resize": true
+            },
+            "modes": {
+              "grab": { "distance": 200, "line_linked": { "opacity": 0.8 } },
+              "push": { "particles_nb": 4 }
+            }
+          },
+          "retina_detect": true
+        });
+
+        // Intersection Observer para dar efecto de "fade in" al hacer scroll
+        document.addEventListener("DOMContentLoaded", function() {
+            const cards = document.querySelectorAll('.glass-card');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('in-view');
+                    }
+                });
+            }, {
+                threshold: 0.2 // Se activa cuando el 20% de la tarjeta es visible
+            });
+
+            cards.forEach(card => observer.observe(card));
+        });
+    </script>
+</body>
+</html>
