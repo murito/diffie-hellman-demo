@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complexity & Quantum Computing</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            background-color: #050505;
+            font-family: 'Inter', sans-serif;
+            color: #d1d5db;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 0; 
+            pointer-events: none;
+        }
+
+        .glass-container {
+            position: relative;
+            z-index: 10;
+            background: rgba(20, 25, 35, 0.75);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6), inset 0 0 30px rgba(0, 255, 255, 0.05);
+            width: 95%;
+            max-width: 1000px;
+            height: 85vh;
+            overflow-y: auto;
+            text-align: center;
+            scrollbar-width: thin;
+            scrollbar-color: #00f2fe transparent;
+            scroll-behavior: smooth;
+            scroll-snap-type: y mandatory;
+        }
+        
+        .glass-container::-webkit-scrollbar { width: 8px; }
+        .glass-container::-webkit-scrollbar-thumb { background: #00f2fe; border-radius: 4px; }
+
+        h1 {
+            font-size: 2.8em;
+            background: linear-gradient(90deg, #00f2fe 0%, #4facfe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-top: 0;
+            margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            background-color: rgba(20, 25, 35, 0.98);
+            padding: 20px 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .section {
+            position: relative;
+            height: 75vh;
+            scroll-snap-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.8s ease-out;
+        }
+
+        .complexity-card {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 30px;
+            width: 80%;
+            max-width: 600px;
+            transform: scale(0.9);
+            opacity: 0.5;
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .section.visible .complexity-card {
+            transform: scale(1);
+            opacity: 1;
+            border-color: #00f2fe;
+            box-shadow: 0 0 30px rgba(0, 242, 254, 0.2);
+        }
+
+        .big-o {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 4em;
+            font-weight: 800;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .name {
+            font-size: 1.5em;
+            color: #facc15;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .desc {
+            font-size: 1.1em;
+            color: #9ca3af;
+            line-height: 1.6;
+        }
+
+        /* Color variants for Big O */
+        .c-1 { color: #22c55e; }     /* Excellent */
+        .c-log { color: #84cc16; }   /* Good */
+        .c-n { color: #eab308; }     /* Fair */
+        .c-nlog { color: #f97316; }  /* Mediocre */
+        .c-n2 { color: #ef4444; }    /* Bad */
+        .c-poly { color: #991b1b; }  /* Very Bad - Higher degree polynomial */
+        .c-subexp { color: #c026d3; } /* Very Bad - Cryptographic range */
+        .c-exp { color: #dc2626; }   /* Horrible */
+        .c-fact { color: #7f1d1d; }  /* Apocalypse */
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+            width: 100%;
+        }
+
+        .comp-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .comp-title {
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .comp-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.4em;
+            color: #00f2fe;
+        }
+
+        .scroll-hint {
+            margin-top: 30px;
+            color: #4b5563;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+
+        .quantum-tag {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 0.8em;
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="particles-js"></div>
+
+    <div class="glass-container" id="scrollContainer">
+        <h1>Algorithm Complexity & Quantum</h1>
+
+        <!-- O(1) -->
+        <div class="section" id="o1">
+            <div class="complexity-card">
+                <span class="big-o c-1">O(1)</span>
+                <span class="name">Constant Time</span>
+                <p class="desc">The execution time is independent of the input size. Accessing an array element by index or basic arithmetic.</p>
+            </div>
+            <div class="scroll-hint"><i class="fas fa-chevron-down"></i> Scroll to increase complexity</div>
+        </div>
+
+        <!-- O(log n) -->
+        <div class="section" id="ologn">
+            <div class="complexity-card">
+                <span class="big-o c-log">O(log n)</span>
+                <span class="name">Logarithmic Time</span>
+                <p class="desc">Execution time increases very slowly. Classic example: Binary Search. Highly efficient even for massive datasets.</p>
+            </div>
+        </div>
+
+        <!-- O(n) -->
+        <div class="section" id="on">
+            <div class="complexity-card">
+                <span class="big-o c-n">O(n)</span>
+                <span class="name">Linear Time</span>
+                <p class="desc">Performance is directly proportional to the input size. Iterating through a list or finding the max value.</p>
+            </div>
+        </div>
+
+        <!-- O(n log n) -->
+        <div class="section" id="onlogn">
+            <div class="complexity-card">
+                <span class="big-o c-nlog">O(n log n)</span>
+                <span class="name">Linearithmic Time</span>
+                <p class="desc">Standard for efficient sorting algorithms like Mergesort and Quicksort. Good for large scale processing.</p>
+            </div>
+        </div>
+
+        <!-- O(n^2) -->
+        <div class="section" id="on2">
+            <div class="complexity-card">
+                <span class="big-o c-n2">O(n²)</span>
+                <span class="name">Quadratic Time</span>
+                <p class="desc">Nested loops. Performance degrades quickly. Bubble sort or naive matrix addition.</p>
+            </div>
+        </div>
+
+        <!-- Polynomial Time (General) -->
+        <div class="section" id="opoly">
+            <div class="complexity-card">
+                <span class="big-o c-poly">O(nᵏ)</span>
+                <span class="name">Polynomial Time</span>
+                <p class="desc">The boundary of "tractable" problems. While $O(n)$ and $O(n^2)$ are polynomials, higher degrees like $O(n^{10})$ become extremely slow but still mathematically distinct from exponential growth.</p>
+            </div>
+        </div>
+
+        <!-- Subexponential -->
+        <div class="section" id="osubexp">
+            <div class="complexity-card">
+                <span class="big-o c-subexp">2^O(nε)</span>
+                <span class="name">Subexponential Time</span>
+                <p class="desc">Faster than exponential but slower than polynomial. This is the complexity of the best classical algorithms for <strong>Discrete Logarithms</strong> and <strong>RSA</strong>.</p>
+            </div>
+        </div>
+
+        <!-- O(2^n) -->
+        <div class="section" id="o2n">
+            <div class="complexity-card">
+                <span class="big-o c-exp">O(2ⁿ)</span>
+                <span class="name">Exponential Time</span>
+                <p class="desc">Doubles with each new input. Brute-forcing passwords or solving the Towers of Hanoi.</p>
+            </div>
+        </div>
+
+        <!-- O(n!) -->
+        <div class="section" id="onfact">
+            <div class="complexity-card">
+                <span class="big-o c-fact">O(n!)</span>
+                <span class="name">Factorial Time</span>
+                <p class="desc">The "Hard Limit". Calculating all permutations of a set. Traveling Salesman Problem (Brute Force).</p>
+            </div>
+        </div>
+
+        <!-- The Discrete Logarithm Comparison -->
+        <div class="section" id="quantum">
+            <div class="complexity-card" style="max-width: 850px;">
+                <span class="quantum-tag">CYBERSECURITY CHALLENGE</span>
+                <h2 style="color:#00f2fe; margin: 0 0 10px 0;">The Discrete Logarithm Problem</h2>
+                <p class="desc" style="font-size: 0.95em;">This math problem powers modern encryption (Diffie-Hellman). We assume it is nearly impossible to solve for large numbers... until Quantum computing arrives.</p>
+                
+                <div class="comparison-grid">
+                    <div class="comp-box">
+                        <div class="comp-title">Modern Supercomputer</div>
+                        <div class="comp-val">Sub-Exponential</div>
+                        <p style="font-size: 0.8em; margin-top:10px;">Using GNFS algorithms. Solving a 2048-bit key would take <strong>millions of years</strong>.</p>
+                    </div>
+                    <div class="comp-box" style="border-color: #a855f7;">
+                        <div class="comp-title" style="color:#a855f7;">Quantum Computer</div>
+                        <div class="comp-val" style="color:#a855f7;">Polynomial Time</div>
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 1em; color: #a855f7; margin-bottom: 5px;">O((log N)³)</div>
+                        <p style="font-size: 0.8em; margin-top:10px;">Using <strong>Shor's Algorithm</strong>. Solving a 2048-bit key could take <strong>hours or minutes</strong>.</p>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 25px; font-size: 0.85em; background: rgba(239, 68, 68, 0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.3);">
+                    <i class="fas fa-exclamation-triangle"></i> This is why the world is moving towards <strong>Post-Quantum Cryptography</strong>.
+                </div>
+            </div>
+        </div>
+
+        <div style="height: 10vh;"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        // Setup Particles
+        particlesJS("particles-js", {
+          "particles": {
+            "number": { "value": 80 },
+            "color": { "value": ["#00f2fe", "#a855f7", "#22c55e", "#facc15"] },
+            "shape": { "type": "circle" },
+            "opacity": { "value": 0.4, "random": true },
+            "size": { "value": 2, "random": true },
+            "line_linked": { "enable": true, "distance": 120, "color": "#ffffff", "opacity": 0.1, "width": 1 },
+            "move": { "enable": true, "speed": 1, "direction": "none" }
+          },
+          "interactivity": { "events": { "onhover": { "enable": true, "mode": "grab" } } }
+        });
+
+        // Scroll logic to highlight current section
+        const observerOptions = {
+            root: document.getElementById('scrollContainer'),
+            threshold: 0.6
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                } else {
+                    entry.target.classList.remove('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.section').forEach(section => {
+            observer.observe(section);
+        });
+    </script>
+</body>
+</html>

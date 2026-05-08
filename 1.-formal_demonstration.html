@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mathematical Foundation of the Diffie-Hellman Protocol</title>
+    
+    <!-- MathJax for high-quality LaTeX rendering -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body {
+            background-color: #ffffff;
+            color: #000000;
+            font-family: "Times New Roman", Times, serif;
+            line-height: 1.5;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            text-align: justify;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-top: 30px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
+        }
+
+        .abstract {
+            font-style: italic;
+            margin: 0 40px 30px 40px;
+            font-size: 0.95em;
+        }
+
+        .abstract b {
+            font-style: normal;
+            text-transform: uppercase;
+        }
+
+        section {
+            margin-bottom: 20px;
+        }
+
+        .formula {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .proof {
+            margin: 20px 0;
+            padding-left: 20px;
+            border-left: 2px solid #ccc;
+        }
+
+        .author {
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .institution {
+            font-size: 0.9em;
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        footer {
+            margin-top: 50px;
+            font-size: 0.8em;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>On the Algebraic Foundations of the Diffie-Hellman Key Exchange Protocol</h1>
+        <div class="author">Technical Presentation for Academic Review</div>
+        <div class="institution">Department of Cryptographic Research</div>
+    </header>
+
+    <div class="abstract">
+        <b>Abstract.</b> This document provides a rigorous mathematical exposition of the Diffie-Hellman key exchange algorithm. We explore the protocol's reliance on the Discrete Logarithm Problem (DLP) within finite cyclic groups, specifically focusing on the multiplicative group of integers modulo \(p\). The following sections detail the group-theoretic preliminaries, the protocol execution, and a formal proof of correctness based on the commutative properties of exponentiation in a finite field.
+    </div>
+
+    <section>
+        <h2>1. Mathematical Preliminaries</h2>
+        <p>The Diffie-Hellman protocol is defined over a multiplicative cyclic group \(G\) of order \(q\). In its standard implementation, we utilize the group \((\mathbb{Z}/p\mathbb{Z})^*\), where \(p\) is a large prime number. Let \(g\) be a primitive root modulo \(p\), such that the set of powers \(\{g^1, g^2, \dots, g^{p-1}\}\) generates all elements of the group.</p>
+        
+        <p>The security of the protocol is predicated on the <b>Computational Diffie-Hellman (CDH)</b> assumption, which states that given \(g, g^a, \text{ and } g^b\), it is computationally infeasible to compute \(g^{ab}\) in a reasonable timeframe, provided that the group parameters are sufficiently large.</p>
+    </section>
+
+    <section>
+        <h2>2. Protocol Specification</h2>
+        <p>Two parties, conventionally denoted as Alice and Bob, agree upon a large prime \(p\) and a generator \(g\). These parameters are public. The exchange proceeds as follows:</p>
+
+        <ol>
+            <li>Alice selects a private random integer \(a \in \{1, \dots, p-1\}\) and computes her public key:
+                <div class="formula">\(A \equiv g^a \pmod{p}\)</div>
+            </li>
+            <li>Bob selects a private random integer \(b \in \{1, \dots, p-1\}\) and computes his public key:
+                <div class="formula">\(B \equiv g^b \pmod{p}\)</div>
+            </li>
+            <li>Alice and Bob exchange their public keys \(A\) and \(B\) over an insecure channel.</li>
+            <li>Alice computes the shared secret \(s\) using Bob's public key:
+                <div class="formula">\(s \equiv B^a \pmod{p}\)</div>
+            </li>
+            <li>Bob computes the shared secret \(s\) using Alice's public key:
+                <div class="formula">\(s \equiv A^b \pmod{p}\)</div>
+            </li>
+        </ol>
+    </section>
+
+    <section>
+        <h2>3. Proof of Correctness</h2>
+        <p>To establish the validity of the protocol, we must demonstrate that both parties arrive at the identical shared secret \(s\). The proof follows from the properties of modular exponentiation and the associativity of multiplication in the group \(G\).</p>
+        
+        <div class="proof">
+            <p><b>Theorem.</b> The value computed by Alice, \(s_A\), is congruent to the value computed by Bob, \(s_B\), modulo \(p\).</p>
+            <p><i>Proof.</i> Alice's computation yields:</p>
+            <div class="formula">\(s_A \equiv B^a \equiv (g^b)^a \equiv g^{ba} \pmod{p}\)</div>
+            
+            <p>Bob's computation yields:</p>
+            <div class="formula">\(s_B \equiv A^b \equiv (g^a)^b \equiv g^{ab} \pmod{p}\)</div>
+            
+            <p>Since multiplication is commutative in the integers, \(ab = ba\). It follows that:</p>
+            <div class="formula">\(g^{ab} \equiv g^{ba} \pmod{p}\)</div>
+            
+            <p>Thus, \(s_A = s_B\). The proof is complete. \(\square\)</p>
+        </div>
+    </section>
+
+    <section>
+        <h2>4. Complexity and Security Analysis</h2>
+        <p>The security of the exchange is tied to the difficulty of reversing the modular exponentiation. While computing \(g^a \pmod{p}\) is efficient (utilizing square-and-multiply algorithms with \(O(\log a)\) complexity), finding \(a\) from \(g^a \pmod{p}\) requires solving the Discrete Logarithm Problem.</p>
+        
+        <p>Under classical computation, the <b>General Number Field Sieve (GNFS)</b> provides a sub-exponential complexity:</p>
+        <div class="formula">
+            \[ L_p\left[\frac{1}{3}, c\right] = e^{(c+o(1))(\ln p)^{1/3}(\ln \ln p)^{2/3}} \]
+        </div>
+        
+        <p>However, the <b>Shor's Algorithm</b> for quantum computers provides a polynomial-time solution:</p>
+        <div class="formula">
+            \[ O((\log p)^3) \]
+        </div>
+        <p>This necessitates the transition to post-quantum cryptographic primitives in the future.</p>
+    </section>
+
+    <footer>
+        <p><b>References:</b><br>
+        [1] Diffie, W., & Hellman, M. (1976). New directions in cryptography. IEEE Transactions on Information Theory.<br>
+        [2] Menezes, A. J., van Oorschot, P. C., & Vanstone, S. A. (1996). Handbook of Applied Cryptography. CRC Press.</p>
+    </footer>
+
+</body>
+</html>
